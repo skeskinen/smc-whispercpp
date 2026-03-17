@@ -63,8 +63,13 @@ function(ggml_add_cpu_backend_variant_impl tag_name)
             message(STATUS "Accelerate framework found")
 
             target_compile_definitions(${GGML_CPU_NAME} PRIVATE GGML_USE_ACCELERATE)
-            target_compile_definitions(${GGML_CPU_NAME} PRIVATE ACCELERATE_NEW_LAPACK)
-            target_compile_definitions(${GGML_CPU_NAME} PRIVATE ACCELERATE_LAPACK_ILP64)
+            # Only use the new ILP64 LAPACK interface on macOS 13.3+.
+            # The $NEWLAPACK$ILP64 symbols don't exist on macOS 12.
+            if (CMAKE_OSX_DEPLOYMENT_TARGET VERSION_GREATER_EQUAL "13.3"
+                OR (NOT CMAKE_OSX_DEPLOYMENT_TARGET AND CMAKE_SYSTEM_VERSION VERSION_GREATER_EQUAL "22.4"))
+                target_compile_definitions(${GGML_CPU_NAME} PRIVATE ACCELERATE_NEW_LAPACK)
+                target_compile_definitions(${GGML_CPU_NAME} PRIVATE ACCELERATE_LAPACK_ILP64)
+            endif()
 
             target_link_libraries(${GGML_CPU_NAME} PRIVATE ${ACCELERATE_FRAMEWORK})
         else()

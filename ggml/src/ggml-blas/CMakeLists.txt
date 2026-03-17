@@ -16,8 +16,13 @@ if (BLAS_FOUND)
                             )
 
     if (${GGML_BLAS_VENDOR} MATCHES "Apple")
-        add_compile_definitions(ACCELERATE_NEW_LAPACK)
-        add_compile_definitions(ACCELERATE_LAPACK_ILP64)
+        # Only use the new ILP64 LAPACK interface on macOS 13.3+.
+        # The $NEWLAPACK$ILP64 symbols don't exist on macOS 12.
+        if (CMAKE_OSX_DEPLOYMENT_TARGET VERSION_GREATER_EQUAL "13.3"
+            OR (NOT CMAKE_OSX_DEPLOYMENT_TARGET AND CMAKE_SYSTEM_VERSION VERSION_GREATER_EQUAL "22.4"))
+            add_compile_definitions(ACCELERATE_NEW_LAPACK)
+            add_compile_definitions(ACCELERATE_LAPACK_ILP64)
+        endif()
         add_compile_definitions(GGML_BLAS_USE_ACCELERATE)
     elseif ("${BLAS_INCLUDE_DIRS}" STREQUAL "")
         # BLAS_INCLUDE_DIRS is missing in FindBLAS.cmake.
